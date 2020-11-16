@@ -1,7 +1,6 @@
 package com.plaid.reit.config;
 
 import com.plaid.client.PlaidClient;
-import okhttp3.logging.HttpLoggingInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,14 +8,14 @@ import org.springframework.context.annotation.Configuration;
 public class AppConfig {
 
     private static final String client = "5faf5102744b4600133920fc";
-    private static final String secret = "bf325df1afcf566b89693729a84865";
+    private static final String secret = "5e02c0028cee432df68a2cf563767b";
 
     @Bean
     public PlaidClient plaidClient() {
         return PlaidClient.newBuilder()
                 .clientIdAndSecret(client, secret)
 //                .logLevel(HttpLoggingInterceptor.Level.BODY)
-                .sandboxBaseUrl()
+                .developmentBaseUrl()
                 .build();
     }
 

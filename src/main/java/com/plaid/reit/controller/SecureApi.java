@@ -6,7 +6,6 @@ import com.plaid.reit.model.dto.InvestorRequest;
 import com.plaid.reit.model.dto.LinkTokenResp;
 import com.plaid.reit.model.dto.ProfileResp;
 import com.plaid.reit.model.dto.TransferRequest;
-import com.plaid.reit.service.InvestorService;
 import com.plaid.reit.service.PlaidService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -17,16 +16,10 @@ import org.springframework.web.bind.annotation.*;
 public class SecureApi {
 
     @Autowired private PlaidService plaidService;
-    @Autowired private InvestorService investorService;
 
     @GetMapping("/profile")
     public ProfileResp getProfile() throws Exception {
         return plaidService.getAccount();
-    }
-
-    @PostMapping(value = "/investor")
-    public void createInvestor(@RequestBody InvestorRequest request) {
-        investorService.createInvestor(request);
     }
 
     @GetMapping("/linked-token")
