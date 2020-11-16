@@ -33,3 +33,7 @@ build/
 .postgres/
 
 frontend/
+
+ssl/
+runtime/
+config/

@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AppConfig {
 
+    private static final String url = "";
+
     private static final String client = "5faf5102744b4600133920fc";
     private static final String secret = "5e02c0028cee432df68a2cf563767b";
 
