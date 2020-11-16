@@ -5,6 +5,7 @@ import com.plaid.client.response.ItemPublicTokenExchangeResponse;
 import com.plaid.reit.model.dto.InvestorRequest;
 import com.plaid.reit.model.dto.LinkTokenResp;
 import com.plaid.reit.model.dto.ProfileResp;
+import com.plaid.reit.model.dto.TransferRequest;
 import com.plaid.reit.service.InvestorService;
 import com.plaid.reit.service.PlaidService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,5 +37,10 @@ public class SecureApi {
     @PostMapping("/token-access/{token}")
     public ItemPublicTokenExchangeResponse createAccess(@PathVariable("token") String token) {
         return plaidService.createAccess(token);
+    }
+
+    @PostMapping("/transfer")
+    public void transferFunds(@RequestBody TransferRequest request) throws Exception {
+        plaidService.transferFunds(request);
     }
 }

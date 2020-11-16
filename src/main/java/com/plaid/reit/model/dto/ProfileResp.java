@@ -8,6 +8,8 @@ public class ProfileResp {
 
     private String email;
 
+    private String institution;
+
     private List<Account> account;
 
     private InvestorResp investor;
@@ -34,5 +36,13 @@ public class ProfileResp {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getInstitution() {
+        return institution;
+    }
+
+    public void setInstitution(String institution) {
+        this.institution = institution;
     }
 }
