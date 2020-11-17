@@ -56,6 +56,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticated()
                 .antMatchers("/payment/**")
                 .authenticated()
+                .antMatchers("/admin/**")
+                .permitAll()
                 .antMatchers("/public/**")
                 .permitAll();
 
