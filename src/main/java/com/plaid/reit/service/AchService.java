@@ -71,7 +71,7 @@ public class AchService {
         investor.setAmount(BigDecimal.ZERO);
         investor.setEndUser(endUser);
         investor.setMemberDate(Timestamp.from(Instant.now()));
-        investor.setLastFourAccountNumber(req.getAccountNumber().substring(req.getAccountNumber().length() - 5));
+        investor.setLastFourAccountNumber(req.getAccountNumber().substring(req.getAccountNumber().length() - 4));
         investor.setBankName(req.getBankName());
 //        investor.setAccountId(resp.getData().getExternal_account_id());
         investor.setAccountId(UUID.randomUUID().toString());
