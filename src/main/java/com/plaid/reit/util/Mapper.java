@@ -2,9 +2,11 @@ package com.plaid.reit.util;
 
 import com.plaid.reit.model.Dividend;
 import com.plaid.reit.model.Investor;
+import com.plaid.reit.model.Transaction;
 import com.plaid.reit.model.dto.DividendResp;
 import com.plaid.reit.model.dto.InvestorRequest;
 import com.plaid.reit.model.dto.InvestorResp;
+import com.plaid.reit.model.dto.TransactionResp;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -21,10 +23,17 @@ public class Mapper {
         return investor;
     }
 
-    public static InvestorResp entityToDto(Investor investor, List<Dividend> dividends) {
+    public static InvestorResp entityToDto(Investor investor, List<Dividend> dividends,
+                                           List<Transaction> transactions) {
         InvestorResp resp = new InvestorResp();
         resp.setAmount(investor.getAmount());
+        resp.setLastFourAccountNumber(investor.getLastFourAccountNumber());
+        resp.setBankName(investor.getBankName());
+        resp.setBankType(investor.getBankType());
+        resp.setTrossAccount(investor.getTrossAccountNumber());
         resp.setDividends(dividends.stream()
+                .map(Mapper::entityToDto).collect(Collectors.toList()));
+        resp.setTransactions(transactions.stream()
                 .map(Mapper::entityToDto).collect(Collectors.toList()));
         resp.setMemberDate(investor.getMemberDate());
         return resp;
@@ -35,6 +44,16 @@ public class Mapper {
         resp.setAmount(dividend.getAmount());
         resp.setCreatedAt(dividend.getCreatedAt());
         resp.setId(dividend.getId());
+        return resp;
+    }
+
+    public static TransactionResp entityToDto(Transaction transaction) {
+        TransactionResp resp = new TransactionResp();
+        resp.setAmount(transaction.getAmount());
+        resp.setCreatedAt(transaction.getCreatedAt());
+        resp.setId(transaction.getId());
+        resp.setTransferStatus(transaction.getTransferStatus());
+        resp.setTransactionType(transaction.getTransactionType());
         return resp;
     }
 

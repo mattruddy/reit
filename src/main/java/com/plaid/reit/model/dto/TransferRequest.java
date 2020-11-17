@@ -1,16 +1,36 @@
 package com.plaid.reit.model.dto;
 
+import java.util.Date;
+
 public class TransferRequest {
 
-    private String accountId;
+    private String from;
+    private String to;
+    private Date transferDate;
     private double amount;
 
-    public String getAccountId() {
-        return accountId;
+    public Date getTransferDate() {
+        return transferDate;
     }
 
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
+    public void setTransferDate(Date transferDate) {
+        this.transferDate = transferDate;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String from) {
+        this.from = from;
+    }
+
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
     }
 
     public double getAmount() {

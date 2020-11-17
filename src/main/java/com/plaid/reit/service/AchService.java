@@ -4,11 +4,15 @@ import com.google.gson.Gson;
 import com.plaid.reit.exception.ServiceException;
 import com.plaid.reit.model.EndUser;
 import com.plaid.reit.model.Investor;
+import com.plaid.reit.model.Transaction;
+import com.plaid.reit.model.dto.InvestorResp;
+import com.plaid.reit.model.dto.TransactionResp;
+import com.plaid.reit.model.dto.TransferRequest;
 import com.plaid.reit.model.paymentDto.*;
 import com.plaid.reit.repository.EndUserRepo;
-import com.plaid.reit.repository.TransactionService;
 import com.plaid.reit.security.UserIdentity;
 import com.plaid.reit.util.AccountNumberUtil;
+import com.plaid.reit.util.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -24,7 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.UUID;
@@ -36,18 +39,17 @@ public class AchService {
     @Autowired private EndUserRepo endUserRepo;
     @Autowired private TransactionService transactionService;
 
-    private static final Gson gson = new Gson().newBuilder()
-            .setLenient()
-            .create();
+    private static final Gson gson = new Gson();
     private static final RestTemplate restTemplate = new RestTemplate();
 
     private static final String PAYMENT_URL = "http://payment:80/api";
     private static final String API_TOKEN = "2dmBxtqEKcf2PTVgHQmRP8hDLeu41sZY2pLlDH3frBb";
     private static final String API_KEY = "mtiZ5yW9OjrIjaoY7ZldI7jZGM9NM5Aj21upVwsb9ME";
     private static final String PAYMENT_TYPE_DEBIT = "92486311-be4d-4c86-8798-4a47ba80533b";
+    private static final String PAYMENT_TYPE_CREDIT = "INVALID";
 
     @Transactional
-    public void createExternalAccount(ExternalAccountReq req, HttpServletRequest servletRequest) {
+    public InvestorResp createExternalAccount(ExternalAccountReq req, HttpServletRequest servletRequest) {
         String sessionId = connect();
 
         EndUser endUser = userIdentity.getEndUser();
@@ -70,6 +72,7 @@ public class AchService {
         Investor investor = new Investor();
         investor.setAmount(BigDecimal.ZERO);
         investor.setEndUser(endUser);
+        investor.setTrossAccountNumber(AccountNumberUtil.generateRandom());
         investor.setMemberDate(Timestamp.from(Instant.now()));
         investor.setLastFourAccountNumber(req.getAccountNumber().substring(req.getAccountNumber().length() - 4));
         investor.setBankName(req.getBankName());
@@ -80,19 +83,19 @@ public class AchService {
         endUser.setInvestor(investor);
         endUserRepo.save(endUser);
         disconnect(sessionId);
+        return Mapper.entityToDto(investor, Collections.emptyList(), Collections.emptyList());
     }
 
-    public void createPayment() {
+    public TransactionResp createPayment(TransferRequest transferRequest) {
         EndUser endUser = userIdentity.getEndUser();
 
-        if (endUser.getInvestor() == null
-                || endUser.getInvestor().getAccountId() == null) {
+        if (endUser.getInvestor() == null) {
             throw new ServiceException("Account not created");
         }
 
         String sessionId = connect();
 
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 //        HttpHeaders headers = getHeaders(sessionId);
 //        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 //        map.add("payment_schedule_external_account_id", endUser.getInvestor().getAccountId());
@@ -108,9 +111,9 @@ public class AchService {
 //
 //        PaymentResp resp = gson.fromJson(responseEntity.getBody(), PaymentResp.class);
 
-        transactionService.createTransaction(BigDecimal.valueOf(.01), UUID.randomUUID().toString());
-
+        Transaction transaction = transactionService.createTransaction(transferRequest);
         disconnect(sessionId);
+        return Mapper.entityToDto(transaction);
     }
 
     private String createPaymentProfile(String sessionId) {

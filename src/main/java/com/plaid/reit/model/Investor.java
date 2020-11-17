@@ -20,6 +20,9 @@ public class Investor implements Serializable {
     @Column
     private Timestamp memberDate;
 
+    @Column(nullable = false)
+    private String trossAccountNumber;
+
     @Column
     private BigDecimal amount = BigDecimal.ZERO;
 
@@ -127,6 +130,14 @@ public class Investor implements Serializable {
 
     public void setBankType(BankType bankType) {
         this.bankType = bankType;
+    }
+
+    public String getTrossAccountNumber() {
+        return trossAccountNumber;
+    }
+
+    public void setTrossAccountNumber(String trossAccountNumber) {
+        this.trossAccountNumber = trossAccountNumber;
     }
 
     public List<Transaction> getTransactions() {
