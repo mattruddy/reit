@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ConnectResp {
+public class ExternalAccountResp {
 
     @JsonProperty("success")
     private boolean success;
 
-    @JsonProperty("session_id")
-    private String session_id;
+    @JsonProperty("data")
+    private ExternalAccountDataResp data;
 
     public boolean isSuccess() {
         return success;
@@ -20,12 +20,11 @@ public class ConnectResp {
         this.success = success;
     }
 
-
-    public String getSession_id() {
-        return session_id;
+    public ExternalAccountDataResp getData() {
+        return data;
     }
 
-    public void setSession_id(String session_id) {
-        this.session_id = session_id;
+    public void setData(ExternalAccountDataResp data) {
+        this.data = data;
     }
 }

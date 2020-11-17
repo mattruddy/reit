@@ -1,16 +1,16 @@
-version: '3.8'
+version: '3'
 
 services:
   db:
     image: postgres
     environment:
-      - POSTGRES_DB=realestate
+      - POSTGRES_DB=reit
       - POSTGRES_USER=mattruddy
       - POSTGRES_PASSWORD=password
     ports:
       - 5432:5432
-    volumes:
-      - ./.postgres/data:/var/lib/postgresql/data
+#    volumes:
+#      - ./.postgres/data:/var/lib/postgresql/data
   reit:
     image: reit:latest
     expose:

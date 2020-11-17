@@ -1,5 +1,7 @@
 package com.plaid.reit.model;
 
+import com.plaid.reit.util.BankType;
+
 import javax.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -24,9 +26,25 @@ public class Investor implements Serializable {
     @Column(nullable = false)
     private String accountNumber;
 
+    @Column
+    private String profileId;
+
+    @Column
+    private String accountId;
+
+    @Column
+    private String lastFourAccountNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column
+    private BankType bankType;
+
     @OneToOne
     @JoinColumn(name = "end_user_id")
     private EndUser endUser;
+
+    @OneToMany(mappedBy = "investor", cascade = CascadeType.ALL)
+    private List<Transaction> transactions = new ArrayList<>();
 
     @OneToMany(mappedBy = "investor", cascade = CascadeType.ALL)
     private List<Dividend> dividends = new ArrayList<>();
@@ -73,6 +91,46 @@ public class Investor implements Serializable {
 
     public String getAccountNumber() {
         return accountNumber;
+    }
+
+    public String getProfileId() {
+        return profileId;
+    }
+
+    public void setProfileId(String profileId) {
+        this.profileId = profileId;
+    }
+
+    public String getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
+    }
+
+    public String getLastFourAccountNumber() {
+        return lastFourAccountNumber;
+    }
+
+    public void setLastFourAccountNumber(String lastFourAccountNumber) {
+        this.lastFourAccountNumber = lastFourAccountNumber;
+    }
+
+    public BankType getBankType() {
+        return bankType;
+    }
+
+    public void setBankType(BankType bankType) {
+        this.bankType = bankType;
+    }
+
+    public List<Transaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(List<Transaction> transactions) {
+        this.transactions = transactions;
     }
 
     public void setAccountNumber(String accountNumber) {

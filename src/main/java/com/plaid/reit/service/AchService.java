@@ -1,20 +1,29 @@
 package com.plaid.reit.service;
 
 import com.google.gson.Gson;
-import com.plaid.reit.model.paymentDto.ConnectResp;
-import com.plaid.reit.model.paymentDto.ExternalAccountReq;
+import com.plaid.reit.exception.ServiceException;
+import com.plaid.reit.model.EndUser;
+import com.plaid.reit.model.Investor;
+import com.plaid.reit.model.paymentDto.*;
+import com.plaid.reit.repository.EndUserRepo;
+import com.plaid.reit.repository.TransactionService;
+import com.plaid.reit.security.UserIdentity;
+import com.plaid.reit.util.AccountNumberUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -22,88 +31,70 @@ import java.util.Collections;
 @Component
 public class AchService {
 
-    private static final Gson gson = new Gson();
+    @Autowired private UserIdentity userIdentity;
+    @Autowired private EndUserRepo endUserRepo;
+    @Autowired private TransactionService transactionService;
+
+    private static final Gson gson = new Gson().newBuilder()
+            .setLenient()
+            .create();
     private static final RestTemplate restTemplate = new RestTemplate();
 
     private static final String PAYMENT_URL = "http://payment:80/api";
     private static final String API_TOKEN = "2dmBxtqEKcf2PTVgHQmRP8hDLeu41sZY2pLlDH3frBb";
     private static final String API_KEY = "mtiZ5yW9OjrIjaoY7ZldI7jZGM9NM5Aj21upVwsb9ME";
+    private static final String PAYMENT_TYPE_DEBIT = "92486311-be4d-4c86-8798-4a47ba80533b";
 
-    public void connect(HttpServletResponse response) {
-        try {
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-            MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-            map.add("user_api_token", API_TOKEN);
-            map.add("user_api_key", API_KEY);
-            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-
-            ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/connect", request , String.class);
-            ConnectResp connectResp = gson.fromJson(responseEntity.getBody(), ConnectResp.class);
-            Cookie cookie = new Cookie("PHPSESSID", connectResp.getSession_id());
-            cookie.setPath("/");
-            cookie.setMaxAge(24*60*60);
-            response.addCookie(cookie);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void createPaymentProfile(HttpServletRequest servletRequest) {
-        String sessionId = null;
-        for (Cookie cookie : servletRequest.getCookies()) {
-            if (cookie.getName().equalsIgnoreCase("PHPSESSID")) {
-                sessionId = cookie.getValue();
-                break;
-            }
-        }
-        HttpHeaders headers = getHeaders(sessionId);
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("payment_profile_external_id", "me");
-        map.add("payment_profile_email_address", "yo@aol.com");
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/savePaymentProfile", request , String.class);
-        System.out.println(responseEntity.getBody());
-    }
-
+    @Transactional
     public void createExternalAccount(ExternalAccountReq req, HttpServletRequest servletRequest) {
-        String sessionId = null;
-        for (Cookie cookie : servletRequest.getCookies()) {
-            if (cookie.getName().equalsIgnoreCase("PHPSESSID")) {
-                sessionId = cookie.getValue();
-                break;
-            }
+        String sessionId = connect();
+
+        EndUser endUser = userIdentity.getEndUser();
+        if (endUser.getInvestor() != null) {
+            throw new ServiceException("Account Created Already");
         }
         HttpHeaders headers = getHeaders(sessionId);
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("external_account_payment_profile_id", "9499ac48-6d65-4a53-849d-85934cbf710e");
+        map.add("external_account_payment_profile_id", createPaymentProfile(sessionId));
         map.add("external_account_type", req.getBankType().getValue());
         map.add("external_account_holder", req.getAccountHolder());
         map.add("external_account_dfi_id", req.getRoutingNumber());
         map.add("external_account_number", req.getAccountNumber());
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/saveExternalAccount", request , String.class);
-        System.out.println(responseEntity.getBody());
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/saveExternalAccount",
+                request , String.class);
 
+        ExternalAccountResp resp = gson.fromJson(responseEntity.getBody(), ExternalAccountResp.class);
+
+        Investor investor = new Investor();
+        investor.setAmount(BigDecimal.ZERO);
+        investor.setEndUser(endUser);
+        investor.setMemberDate(Timestamp.from(Instant.now()));
+        investor.setLastFourAccountNumber(req.getAccountNumber().substring(req.getAccountNumber().length() - 5));
+        investor.setAccountId(resp.getData().getExternal_account_id());
+        investor.setBankType(req.getBankType());
+        investor.setAccountNumber(AccountNumberUtil.generateRandom());
+
+        endUser.setInvestor(investor);
+        endUserRepo.save(endUser);
+        disconnect(sessionId);
     }
 
-    public void createPayment(HttpServletRequest servletRequest) {
-        String sessionId = null;
-        for (Cookie cookie : servletRequest.getCookies()) {
-            if (cookie.getName().equalsIgnoreCase("PHPSESSID")) {
-                sessionId = cookie.getValue();
-                break;
-            }
+    public void createPayment() {
+        EndUser endUser = userIdentity.getEndUser();
+
+        if (endUser.getInvestor() == null
+                || endUser.getInvestor().getAccountId() == null) {
+            throw new ServiceException("Account not created");
         }
+
+        String sessionId = connect();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         HttpHeaders headers = getHeaders(sessionId);
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("payment_schedule_external_account_id", "a9e06fc1-ef01-4f4b-8d30-15363f4a8138");
-        map.add("payment_schedule_payment_type_id","92486311-be4d-4c86-8798-4a47ba80533b");
+        map.add("payment_schedule_external_account_id", endUser.getInvestor().getAccountId());
+        map.add("payment_schedule_payment_type_id",PAYMENT_TYPE_DEBIT);
         map.add("payment_schedule_next_date", LocalDate.now().format(formatter));
         map.add("payment_schedule_frequency", "once");
         map.add("payment_schedule_end_date", LocalDate.now().format(formatter));
@@ -112,7 +103,46 @@ public class AchService {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/savePaymentSchedule", request , String.class);
-        System.out.println(responseEntity.getBody());
+
+        PaymentResp resp = gson.fromJson(responseEntity.getBody(), PaymentResp.class);
+
+        transactionService.createTransaction(BigDecimal.valueOf(.01), resp.getData().getPayment_schedule_id());
+
+        disconnect(sessionId);
+    }
+
+    private String createPaymentProfile(String sessionId) {
+        HttpHeaders headers = getHeaders(sessionId);
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.add("payment_profile_external_id", Long.toString(userIdentity.getEndUser().getId()));
+        map.add("payment_profile_email_address", userIdentity.getEndUser().getEmail());
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        String json = restTemplate.postForEntity(PAYMENT_URL + "/savePaymentProfile", request , String.class)
+                .getBody();
+        ProfileResp resp = gson.fromJson(json, ProfileResp.class);
+        return resp.getData().getPayment_profile_id();
+    }
+
+    private String connect() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.add("user_api_token", API_TOKEN);
+        map.add("user_api_key", API_KEY);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/connect", request , String.class);
+        ConnectResp connectResp = gson.fromJson(responseEntity.getBody(), ConnectResp.class);
+        return connectResp.getSession_id();
+    }
+
+    private void disconnect(String sessionId) {
+        HttpHeaders headers = getHeaders(sessionId);
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.add("user_api_token", API_TOKEN);
+        map.add("user_api_key", API_KEY);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/disconnect", request , String.class);
     }
 
     private HttpHeaders getHeaders(String sessionId) {

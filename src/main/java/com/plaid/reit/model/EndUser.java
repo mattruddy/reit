@@ -18,9 +18,6 @@ public class EndUser implements Serializable {
     private String passDigest;
 
     @OneToOne(mappedBy = "endUser", cascade = CascadeType.ALL)
-    private Account account;
-
-    @OneToOne(mappedBy = "endUser", cascade = CascadeType.ALL)
     private Investor investor;
 
     public long getId() {
@@ -45,14 +42,6 @@ public class EndUser implements Serializable {
 
     public void setPassDigest(String passDigest) {
         this.passDigest = passDigest;
-    }
-
-    public Account getAccount() {
-        return account;
-    }
-
-    public void setAccount(Account account) {
-        this.account = account;
     }
 
     public Investor getInvestor() {
