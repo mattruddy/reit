@@ -5,7 +5,7 @@ import com.plaid.reit.util.BankType;
 public class ExternalAccountReq {
 
     private BankType bankType;
-    private String accountHolder;
+    private String bankName;
     private String accountNumber;
     private String routingNumber;
 
@@ -17,12 +17,12 @@ public class ExternalAccountReq {
         this.bankType = bankType;
     }
 
-    public String getAccountHolder() {
-        return accountHolder;
+    public String getBankName() {
+        return bankName;
     }
 
-    public void setAccountHolder(String accountHolder) {
-        this.accountHolder = accountHolder;
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
     }
 
     public String getAccountNumber() {

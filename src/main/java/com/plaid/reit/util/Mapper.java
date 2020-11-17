@@ -18,14 +18,11 @@ public class Mapper {
         Investor investor = new Investor();
         investor.setAmount(BigDecimal.valueOf(request.getAmount()));
         investor.setMemberDate(Timestamp.from(Instant.now()));
-        investor.setAccountNumber(AccountNumberUtil.generateRandom());
         return investor;
     }
 
     public static InvestorResp entityToDto(Investor investor, List<Dividend> dividends) {
         InvestorResp resp = new InvestorResp();
-
-        resp.setAccountNumber(investor.getAccountNumber());
         resp.setAmount(investor.getAmount());
         resp.setDividends(dividends.stream()
                 .map(Mapper::entityToDto).collect(Collectors.toList()));

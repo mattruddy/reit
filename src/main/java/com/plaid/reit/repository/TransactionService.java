@@ -19,7 +19,7 @@ public class TransactionService {
 
     @Transactional
     public void createTransaction(BigDecimal amount, String paymentScheduleId) {
-        Investor investor = userIdentity.getEndUser().getInvestor();
+        Investor investor = investorRepo.findByEndUserId(userIdentity.getEndUser().getId());
         Transaction transaction = new Transaction();
         transaction.setAmount(amount);
         transaction.setCreatedAt(Timestamp.from(Instant.now()));

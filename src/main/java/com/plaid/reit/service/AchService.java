@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.UUID;
 
 @Component
 public class AchService {
@@ -53,27 +54,28 @@ public class AchService {
         if (endUser.getInvestor() != null) {
             throw new ServiceException("Account Created Already");
         }
-        HttpHeaders headers = getHeaders(sessionId);
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("external_account_payment_profile_id", createPaymentProfile(sessionId));
-        map.add("external_account_type", req.getBankType().getValue());
-        map.add("external_account_holder", req.getAccountHolder());
-        map.add("external_account_dfi_id", req.getRoutingNumber());
-        map.add("external_account_number", req.getAccountNumber());
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/saveExternalAccount",
-                request , String.class);
-
-        ExternalAccountResp resp = gson.fromJson(responseEntity.getBody(), ExternalAccountResp.class);
+//        HttpHeaders headers = getHeaders(sessionId);
+//        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+//        map.add("external_account_payment_profile_id", createPaymentProfile(sessionId));
+//        map.add("external_account_type", req.getBankType().getValue());
+//        map.add("external_account_holder", req.getAccountHolder());
+//        map.add("external_account_dfi_id", req.getRoutingNumber());
+//        map.add("external_account_number", req.getAccountNumber());
+//        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+//        ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/saveExternalAccount",
+//                request , String.class);
+//
+//        ExternalAccountResp resp = gson.fromJson(responseEntity.getBody(), ExternalAccountResp.class);
 
         Investor investor = new Investor();
         investor.setAmount(BigDecimal.ZERO);
         investor.setEndUser(endUser);
         investor.setMemberDate(Timestamp.from(Instant.now()));
         investor.setLastFourAccountNumber(req.getAccountNumber().substring(req.getAccountNumber().length() - 5));
-        investor.setAccountId(resp.getData().getExternal_account_id());
+        investor.setBankName(req.getBankName());
+//        investor.setAccountId(resp.getData().getExternal_account_id());
+        investor.setAccountId(UUID.randomUUID().toString());
         investor.setBankType(req.getBankType());
-        investor.setAccountNumber(AccountNumberUtil.generateRandom());
 
         endUser.setInvestor(investor);
         endUserRepo.save(endUser);
@@ -90,37 +92,38 @@ public class AchService {
 
         String sessionId = connect();
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        HttpHeaders headers = getHeaders(sessionId);
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("payment_schedule_external_account_id", endUser.getInvestor().getAccountId());
-        map.add("payment_schedule_payment_type_id",PAYMENT_TYPE_DEBIT);
-        map.add("payment_schedule_next_date", LocalDate.now().format(formatter));
-        map.add("payment_schedule_frequency", "once");
-        map.add("payment_schedule_end_date", LocalDate.now().format(formatter));
-        map.add("payment_schedule_amount", Double.toString(.01));
-        map.add("payment_schedule_currency_code", "USD");
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//        HttpHeaders headers = getHeaders(sessionId);
+//        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+//        map.add("payment_schedule_external_account_id", endUser.getInvestor().getAccountId());
+//        map.add("payment_schedule_payment_type_id",PAYMENT_TYPE_DEBIT);
+//        map.add("payment_schedule_next_date", LocalDate.now().format(formatter));
+//        map.add("payment_schedule_frequency", "once");
+//        map.add("payment_schedule_end_date", LocalDate.now().format(formatter));
+//        map.add("payment_schedule_amount", Double.toString(.01));
+//        map.add("payment_schedule_currency_code", "USD");
+//
+//        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+//        ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/savePaymentSchedule", request , String.class);
+//
+//        PaymentResp resp = gson.fromJson(responseEntity.getBody(), PaymentResp.class);
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity(PAYMENT_URL + "/savePaymentSchedule", request , String.class);
-
-        PaymentResp resp = gson.fromJson(responseEntity.getBody(), PaymentResp.class);
-
-        transactionService.createTransaction(BigDecimal.valueOf(.01), resp.getData().getPayment_schedule_id());
+        transactionService.createTransaction(BigDecimal.valueOf(.01), UUID.randomUUID().toString());
 
         disconnect(sessionId);
     }
 
     private String createPaymentProfile(String sessionId) {
-        HttpHeaders headers = getHeaders(sessionId);
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("payment_profile_external_id", Long.toString(userIdentity.getEndUser().getId()));
-        map.add("payment_profile_email_address", userIdentity.getEndUser().getEmail());
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-        String json = restTemplate.postForEntity(PAYMENT_URL + "/savePaymentProfile", request , String.class)
-                .getBody();
-        ProfileResp resp = gson.fromJson(json, ProfileResp.class);
-        return resp.getData().getPayment_profile_id();
+        return UUID.randomUUID().toString();
+//        HttpHeaders headers = getHeaders(sessionId);
+//        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+//        map.add("payment_profile_external_id", Long.toString(userIdentity.getEndUser().getId()));
+//        map.add("payment_profile_email_address", userIdentity.getEndUser().getEmail());
+//        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+//        String json = restTemplate.postForEntity(PAYMENT_URL + "/savePaymentProfile", request , String.class)
+//                .getBody();
+//        ProfileResp resp = gson.fromJson(json, ProfileResp.class);
+//        return resp.getData().getPayment_profile_id();
     }
 
     private String connect() {

@@ -23,9 +23,6 @@ public class Investor implements Serializable {
     @Column
     private BigDecimal amount = BigDecimal.ZERO;
 
-    @Column(nullable = false)
-    private String accountNumber;
-
     @Column
     private String profileId;
 
@@ -34,6 +31,9 @@ public class Investor implements Serializable {
 
     @Column
     private String lastFourAccountNumber;
+
+    @Column
+    private String bankName;
 
     @Enumerated(EnumType.STRING)
     @Column
@@ -55,6 +55,14 @@ public class Investor implements Serializable {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
     }
 
     public Timestamp getMemberDate() {
@@ -87,10 +95,6 @@ public class Investor implements Serializable {
 
     public void setDividends(List<Dividend> dividends) {
         this.dividends = dividends;
-    }
-
-    public String getAccountNumber() {
-        return accountNumber;
     }
 
     public String getProfileId() {
@@ -133,7 +137,4 @@ public class Investor implements Serializable {
         this.transactions = transactions;
     }
 
-    public void setAccountNumber(String accountNumber) {
-        this.accountNumber = accountNumber;
-    }
 }
