@@ -26,8 +26,8 @@ public class SecureApi {
     }
 
     @PostMapping(value = "/account")
-    public InvestorResp createAccount(@RequestBody ExternalAccountReq req, HttpServletRequest request) {
-        return achService.createExternalAccount(req, request);
+    public InvestorResp createAccount(@RequestBody ExternalAccountReq req) {
+        return achService.createExternalAccount(req);
     }
 
     @PostMapping(value = "/transfer")

@@ -30,7 +30,7 @@ public class TransactionService {
     @Autowired private TransactionRepo transactionRepo;
 
     @Transactional
-    public Transaction createTransaction(TransferRequest transferRequest) {
+    public Transaction createTransaction(TransferRequest transferRequest, String paymentScheduleId) {
         Investor investor = investorRepo.findByEndUserId(userIdentity.getEndUser().getId());
 
         if (investor == null) {
@@ -41,7 +41,7 @@ public class TransactionService {
         transaction.setAmount(BigDecimal.valueOf(transferRequest.getAmount()));
         transaction.setCreatedAt(Timestamp.from(Instant.now()));
         transaction.setScheduleDate(Timestamp.from(transferRequest.getTransferDate().toInstant()));
-        transaction.setPaymentScheduleId(UUID.randomUUID().toString());
+        transaction.setPaymentScheduleId(paymentScheduleId);
         transaction.setInvestor(investor);
         transaction.setTransferStatus(TransferStatus.PENDING);
 

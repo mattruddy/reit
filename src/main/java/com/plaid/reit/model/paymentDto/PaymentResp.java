@@ -27,4 +27,12 @@ public class PaymentResp {
     public void setData(PaymentDataResp data) {
         this.data = data;
     }
+
+    @Override
+    public String toString() {
+        return "PaymentResp{" +
+                "success=" + success +
+                ", data=" + data +
+                '}';
+    }
 }

@@ -27,4 +27,12 @@ public class ExternalAccountResp {
     public void setData(ExternalAccountDataResp data) {
         this.data = data;
     }
+
+    @Override
+    public String toString() {
+        return "ExternalAccountResp{" +
+                "success=" + success +
+                ", data=" + data +
+                '}';
+    }
 }

@@ -16,4 +16,11 @@ public class PaymentDataResp {
     public void setPayment_schedule_id(String payment_schedule_id) {
         this.payment_schedule_id = payment_schedule_id;
     }
+
+    @Override
+    public String toString() {
+        return "PaymentDataResp{" +
+                "payment_schedule_id='" + payment_schedule_id + '\'' +
+                '}';
+    }
 }
