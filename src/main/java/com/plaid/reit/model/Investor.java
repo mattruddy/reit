@@ -30,13 +30,16 @@ public class Investor implements Serializable {
     private String profileId;
 
     @Column
-    private String accountId;
+    private String externalAccountId;
 
     @Column
     private String lastFourAccountNumber;
 
     @Column
     private String bankName;
+
+    @Column
+    private Boolean isLinked;
 
     @Enumerated(EnumType.STRING)
     @Column
@@ -96,6 +99,14 @@ public class Investor implements Serializable {
         return dividends;
     }
 
+    public Boolean getLinked() {
+        return isLinked;
+    }
+
+    public void setLinked(Boolean linked) {
+        isLinked = linked;
+    }
+
     public void setDividends(List<Dividend> dividends) {
         this.dividends = dividends;
     }
@@ -108,12 +119,12 @@ public class Investor implements Serializable {
         this.profileId = profileId;
     }
 
-    public String getAccountId() {
-        return accountId;
+    public String getExternalAccountId() {
+        return externalAccountId;
     }
 
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
+    public void setExternalAccountId(String externalAccountId) {
+        this.externalAccountId = externalAccountId;
     }
 
     public String getLastFourAccountNumber() {

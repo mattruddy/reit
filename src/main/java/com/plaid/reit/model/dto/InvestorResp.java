@@ -14,6 +14,7 @@ public class InvestorResp {
     private BankType bankType;
     private String trossAccount;
     private String lastFourAccountNumber;
+    private Boolean isLinked;
     private List<DividendResp> dividends;
     private List<TransactionResp> transactions;
 
@@ -55,6 +56,14 @@ public class InvestorResp {
 
     public void setTrossAccount(String trossAccount) {
         this.trossAccount = trossAccount;
+    }
+
+    public Boolean getLinked() {
+        return isLinked;
+    }
+
+    public void setLinked(Boolean linked) {
+        isLinked = linked;
     }
 
     public BankType getBankType() {

@@ -65,11 +65,11 @@ public class PlaidService {
 //                    )).execute().body();
 //
 //            if (endUser.getAccount() != null) {
-//                endUser.getAccount().setAccountId(response.getAccessToken());
+//                endUser.getAccount().setExternalAccountId(response.getAccessToken());
 //            } else {
 //                Account account = new Account();
 //                account.setEndUser(endUser);
-//                account.setAccountId(response.getAccessToken());
+//                account.setExternalAccountId(response.getAccessToken());
 //                endUser.setAccount(account);
 //            }
 //
@@ -86,7 +86,7 @@ public class PlaidService {
 //        if (account != null) {
 //            AccountsGetResponse accountsGetResponse = plaidClient
 //                    .service().accountsGet(
-//                            new AccountsGetRequest(userIdentity.getEndUser().getAccount().getAccountId())
+//                            new AccountsGetRequest(userIdentity.getEndUser().getAccount().getExternalAccountId())
 //                    ).execute().body();
 //            ProfileResp resp = new ProfileResp();
 //            resp.setEmail(userIdentity.getEndUser().getEmail());
@@ -110,8 +110,8 @@ public class PlaidService {
 //        Account account = endUser.getAccount();
 //        ItemStripeTokenCreateResponse stripe = plaidClient
 //                .service().itemStripeTokenCreate(new ItemStripeTokenCreateRequest(
-//                        account.getAccountId(),
-//                        request.getAccountId()
+//                        account.getExternalAccountId(),
+//                        request.getExternalAccountId()
 //                )).execute().body();
 //        // tranfer using stripe
 //        Investor investor = endUser.getInvestor();

@@ -1,17 +1,22 @@
 package com.plaid.reit.service;
 
+import com.plaid.reit.model.Investor;
 import com.plaid.reit.model.dto.AuthTokenResponse;
 import com.plaid.reit.model.dto.SignUpRequest;
 import com.plaid.reit.exception.ServiceException;
 import com.plaid.reit.model.EndUser;
 import com.plaid.reit.repository.EndUserRepo;
 import com.plaid.reit.security.JwtTokenProvider;
+import com.plaid.reit.util.AccountNumberUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
 
 @Component
 public class AuthService {
@@ -29,6 +34,15 @@ public class AuthService {
         EndUser endUser = new EndUser();
         endUser.setEmail(email);
         endUser.setPassDigest(passwordEncoder.encode(signUpRequest.getPassword()));
+
+        Investor investor = new Investor();
+        investor.setLinked(Boolean.FALSE);
+        investor.setTrossAccountNumber(AccountNumberUtil.generateRandom());
+        investor.setMemberDate(Timestamp.from(Instant.now()));
+        investor.setAmount(BigDecimal.ZERO);
+        investor.setEndUser(endUser);
+
+        endUser.setInvestor(investor);
         endUserRepo.save(endUser);
         return login(email, signUpRequest.getPassword());
     }

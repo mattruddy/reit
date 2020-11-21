@@ -4,14 +4,10 @@ import com.plaid.reit.model.Dividend;
 import com.plaid.reit.model.Investor;
 import com.plaid.reit.model.Transaction;
 import com.plaid.reit.model.dto.DividendResp;
-import com.plaid.reit.model.dto.InvestorRequest;
 import com.plaid.reit.model.dto.InvestorResp;
 import com.plaid.reit.model.dto.TransactionResp;
 import com.plaid.reit.model.paymentDto.ExternalAccountReq;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,14 +15,12 @@ public class Mapper {
 
     private Mapper() {}
 
-    public static Investor dtoToEntity(ExternalAccountReq req, String externalAccountId) {
-        Investor investor = new Investor();
-        investor.setAmount(BigDecimal.ZERO);
-        investor.setTrossAccountNumber(AccountNumberUtil.generateRandom());
-        investor.setMemberDate(Timestamp.from(Instant.now()));
+    public static Investor dtoToEntity(Investor investor, ExternalAccountReq req, String externalAccountId, String profileId) {
+        investor.setProfileId(profileId);
         investor.setLastFourAccountNumber(req.getAccountNumber().substring(req.getAccountNumber().length() - 4));
+        investor.setLinked(Boolean.TRUE);
         investor.setBankName(req.getBankName());
-        investor.setAccountId(externalAccountId);
+        investor.setExternalAccountId(externalAccountId);
         investor.setBankType(req.getBankType());
         return investor;
     }
@@ -44,6 +38,7 @@ public class Mapper {
         resp.setTransactions(transactions.stream()
                 .map(Mapper::entityToDto).collect(Collectors.toList()));
         resp.setMemberDate(investor.getMemberDate());
+        resp.setLinked(investor.getLinked());
         return resp;
     }
 

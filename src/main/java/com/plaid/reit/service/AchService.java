@@ -9,9 +9,8 @@ import com.plaid.reit.model.dto.InvestorResp;
 import com.plaid.reit.model.dto.TransactionResp;
 import com.plaid.reit.model.dto.TransferRequest;
 import com.plaid.reit.model.paymentDto.*;
-import com.plaid.reit.repository.EndUserRepo;
+import com.plaid.reit.repository.InvestorRepo;
 import com.plaid.reit.security.UserIdentity;
-import com.plaid.reit.util.AccountNumberUtil;
 import com.plaid.reit.util.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,8 +32,8 @@ import java.util.Collections;
 public class AchService {
 
     @Autowired private UserIdentity userIdentity;
-    @Autowired private EndUserRepo endUserRepo;
     @Autowired private TransactionService transactionService;
+    @Autowired private InvestorRepo investorRepo;
 
     @Value("${openach.gateway.url}")
     private String paymentUrl;
@@ -44,6 +43,8 @@ public class AchService {
     private String apiKey;
     @Value("${openach.payment.debit}")
     private String paymentDebit;
+    @Value("${openach.payment.credit}")
+    private String paymentCredit;
 
     private static final Gson gson = new Gson();
     private static final RestTemplate restTemplate = new RestTemplate();
@@ -52,13 +53,11 @@ public class AchService {
     public InvestorResp createExternalAccount(ExternalAccountReq req) {
         String sessionId = connect();
 
-        EndUser endUser = userIdentity.getEndUser();
-        if (endUser.getInvestor() != null) {
-            throw new ServiceException("Account Created Already");
-        }
+        Investor investor = userIdentity.getEndUser().getInvestor();
         HttpHeaders headers = getHeaders(sessionId);
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("external_account_payment_profile_id", createPaymentProfile(sessionId));
+        String profileId = createPaymentProfile(sessionId);
+        map.add("external_account_payment_profile_id", profileId);
         map.add("external_account_type", req.getBankType().getValue());
         map.add("external_account_holder", "matt ruddy");
         map.add("external_account_dfi_id", req.getRoutingNumber());
@@ -68,11 +67,36 @@ public class AchService {
                 request , String.class);
 
         ExternalAccountResp resp = gson.fromJson(responseEntity.getBody(), ExternalAccountResp.class);
-        Investor investor = Mapper.dtoToEntity(req, resp.getData().getExternal_account_id());
-        investor.setEndUser(endUser);
-        endUser.setInvestor(investor);
-        endUserRepo.save(endUser);
+        Mapper.dtoToEntity(investor, req, resp.getData().getExternal_account_id(), profileId);
+        investorRepo.save(investor);
 
+        disconnect(sessionId);
+        return Mapper.entityToDto(investor, Collections.emptyList(), Collections.emptyList());
+    }
+
+    @Transactional
+    public InvestorResp deleteExternalAccount() {
+        Investor investor = userIdentity.getEndUser().getInvestor();
+
+        String sessionId = connect();
+
+        HttpHeaders headers = getHeaders(sessionId);
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.add("payment_profile_id", investor.getProfileId());
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(paymentUrl + "/deletePaymentProfile",
+                request, String.class);
+
+        DeleteProfileResp resp = gson.fromJson(responseEntity.getBody(), DeleteProfileResp.class);
+        if (resp.isSuccess()) {
+            investor.setProfileId(null);
+            investor.setExternalAccountId(null);
+            investor.setLastFourAccountNumber(null);
+            investor.setBankName(null);
+            investor.setLinked(Boolean.FALSE);
+            investorRepo.save(investor);
+        }
         disconnect(sessionId);
         return Mapper.entityToDto(investor, Collections.emptyList(), Collections.emptyList());
     }
@@ -92,12 +116,12 @@ public class AchService {
         calendar.add(Calendar.HOUR, 3 * 24);
         HttpHeaders headers = getHeaders(sessionId);
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("payment_schedule_external_account_id", endUser.getInvestor().getAccountId());
+        map.add("payment_schedule_external_account_id", endUser.getInvestor().getExternalAccountId());
         map.add("payment_schedule_payment_type_id", paymentDebit);
         map.add("payment_schedule_next_date", formatter.format(calendar.getTime()));
         map.add("payment_schedule_frequency", "once");
         map.add("payment_schedule_end_date", formatter.format(calendar.getTime()));
-        map.add("payment_schedule_amount", Double.toString(.01));
+        map.add("payment_schedule_amount", Double.toString(transferRequest.getAmount()));
         map.add("payment_schedule_currency_code", "USD");
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);

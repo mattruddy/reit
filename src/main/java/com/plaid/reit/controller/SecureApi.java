@@ -23,33 +23,18 @@ public class SecureApi {
         return investorService.getProfile();
     }
 
-    @PostMapping(value = "/account")
+    @PutMapping(value = "/account")
     public InvestorResp createAccount(@RequestBody ExternalAccountReq req) {
         return achService.createExternalAccount(req);
+    }
+
+    @DeleteMapping(value = "account")
+    public InvestorResp deleteExternalAccount() {
+        return achService.deleteExternalAccount();
     }
 
     @PostMapping(value = "/transfer")
     public TransactionResp createPayment(@RequestBody TransferRequest request) {
         return achService.createPayment(request);
     }
-
-//    @GetMapping("/profile")
-//    public ProfileResp getProfile() throws Exception {
-//        return plaidService.getAccount();
-//    }
-
-//    @GetMapping("/linked-token")
-//    public LinkTokenResp getAccount() {
-//        return new LinkTokenResp(plaidService.linkToken());
-//    }
-
-//    @PostMapping("/token-access/{token}")
-//    public ItemPublicTokenExchangeResponse createAccess(@PathVariable("token") String token) {
-//        return plaidService.createAccess(token);
-//    }
-//
-//    @PostMapping("/transfer")
-//    public void transferFunds(@RequestBody TransferRequest request) throws Exception {
-//        plaidService.transferFunds(request);
-//    }
 }
