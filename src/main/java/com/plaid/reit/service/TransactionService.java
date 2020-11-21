@@ -19,7 +19,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -78,7 +77,6 @@ public class TransactionService {
     @Transactional(readOnly = true)
     public List<TransactionResp> getPendingTransactions() {
         List<Transaction> transactions = transactionRepo.findAllByTransferStatus(TransferStatus.PENDING);
-
         return transactions.stream()
                 .map(Mapper::entityToDto)
                 .collect(Collectors.toList());

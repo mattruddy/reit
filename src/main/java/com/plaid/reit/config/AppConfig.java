@@ -1,22 +1,22 @@
 package com.plaid.reit.config;
 
 import com.plaid.client.PlaidClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AppConfig {
 
-    private static final String url = "";
-
-    private static final String client = "5faf5102744b4600133920fc";
-    private static final String secret = "5e02c0028cee432df68a2cf563767b";
+    @Value("${plaid.api.client}")
+    private String client;
+    @Value("${plaid.api.secret}")
+    private String secret;
 
     @Bean
     public PlaidClient plaidClient() {
         return PlaidClient.newBuilder()
                 .clientIdAndSecret(client, secret)
-//                .logLevel(HttpLoggingInterceptor.Level.BODY)
                 .developmentBaseUrl()
                 .build();
     }

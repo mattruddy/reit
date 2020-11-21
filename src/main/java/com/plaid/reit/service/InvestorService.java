@@ -5,11 +5,9 @@ import com.plaid.reit.model.EndUser;
 import com.plaid.reit.model.Investor;
 import com.plaid.reit.model.Transaction;
 import com.plaid.reit.model.dto.InvestorRequest;
-import com.plaid.reit.model.dto.InvestorResp;
 import com.plaid.reit.model.dto.ProfileResp;
 import com.plaid.reit.repository.DividendRepo;
 import com.plaid.reit.repository.EndUserRepo;
-import com.plaid.reit.repository.InvestorRepo;
 import com.plaid.reit.repository.TransactionRepo;
 import com.plaid.reit.security.UserIdentity;
 import com.plaid.reit.util.Mapper;
@@ -26,15 +24,6 @@ public class InvestorService {
     @Autowired private UserIdentity userIdentity;
     @Autowired private DividendRepo dividendRepo;
     @Autowired private TransactionRepo transactionRepo;
-
-    @Transactional
-    public void createInvestor(InvestorRequest request) {
-        EndUser endUser = userIdentity.getEndUser();
-        Investor investor = Mapper.dtoToEntity(request);
-        investor.setEndUser(endUser);
-        endUser.setInvestor(investor);
-        endUserRepo.save(endUser);
-    }
 
     @Transactional(readOnly = true)
     public ProfileResp getProfile() {

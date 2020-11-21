@@ -7,6 +7,7 @@ import com.plaid.reit.model.dto.DividendResp;
 import com.plaid.reit.model.dto.InvestorRequest;
 import com.plaid.reit.model.dto.InvestorResp;
 import com.plaid.reit.model.dto.TransactionResp;
+import com.plaid.reit.model.paymentDto.ExternalAccountReq;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -16,10 +17,17 @@ import java.util.stream.Collectors;
 
 public class Mapper {
 
-    public static Investor dtoToEntity(InvestorRequest request) {
+    private Mapper() {}
+
+    public static Investor dtoToEntity(ExternalAccountReq req, String externalAccountId) {
         Investor investor = new Investor();
-        investor.setAmount(BigDecimal.valueOf(request.getAmount()));
+        investor.setAmount(BigDecimal.ZERO);
+        investor.setTrossAccountNumber(AccountNumberUtil.generateRandom());
         investor.setMemberDate(Timestamp.from(Instant.now()));
+        investor.setLastFourAccountNumber(req.getAccountNumber().substring(req.getAccountNumber().length() - 4));
+        investor.setBankName(req.getBankName());
+        investor.setAccountId(externalAccountId);
+        investor.setBankType(req.getBankType());
         return investor;
     }
 
@@ -56,5 +64,4 @@ public class Mapper {
         resp.setTransactionType(transaction.getTransactionType());
         return resp;
     }
-
 }
