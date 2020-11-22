@@ -9,6 +9,7 @@ services:
       - POSTGRES_PASSWORD=password
     ports:
       - 5432:5432
+#    ??? why does this not work with with mac os Big Sur??????
 #    volumes:
 #      - ./.postgres/data:/var/lib/postgresql/data
   reit:
@@ -33,11 +34,3 @@ services:
       - 8081:80
     expose:
       - 8081
-  cli:
-    image: openach/openach:latest
-    volumes:
-      - ./runtime:/home/www/openach/protected/runtime
-      - ./config:/home/www/openach/protected/config
-      - ./ssl/openach:/etc/ssl/openach
-    entrypoint: "/home/www/openach/protected/openach"
-    command: "help"
