@@ -55,24 +55,27 @@ public class AchService {
         Investor investor = userIdentity.getEndUser().getInvestor();
         HttpHeaders headers = getHeaders(sessionId);
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        String profileId = createPaymentProfile(sessionId);
+        String profileId = investor.getProfileId() == null
+                ? createPaymentProfile(sessionId)
+                : investor.getProfileId();
         map.add("external_account_payment_profile_id", profileId);
         map.add("external_account_type", req.getBankType().getValue());
         map.add("external_account_holder", "matt ruddy");
         map.add("external_account_dfi_id", req.getRoutingNumber());
         map.add("external_account_number", req.getAccountNumber());
+        map.add("external_account_allow_originator_payments", "true");
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-
+        String json = restTemplate.postForEntity(paymentUrl + "/saveExternalAccount",
+                request , String.class).getBody();
         try {
-            ResponseEntity<String> responseEntity = restTemplate.postForEntity(paymentUrl + "/saveExternalAccount",
-                    request , String.class);
-            ExternalAccountResp resp = gson.fromJson(responseEntity.getBody(), ExternalAccountResp.class);
+            ExternalAccountResp resp = gson.fromJson(json, ExternalAccountResp.class);
             Mapper.dtoToEntity(investor, req, resp.getData().getExternal_account_id(), profileId);
             investorRepo.save(investor);
 
             disconnect(sessionId);
             return Mapper.entityToDto(investor, Collections.emptyList(), Collections.emptyList());
         } catch (Exception e) {
+            System.out.println(json);
             throw new ServiceException("Issue linking bank account");
         }
     }
@@ -80,32 +83,12 @@ public class AchService {
     @Transactional
     public InvestorResp deleteExternalAccount() {
         Investor investor = userIdentity.getEndUser().getInvestor();
-
-        String sessionId = connect();
-
-        HttpHeaders headers = getHeaders(sessionId);
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("payment_profile_id", investor.getProfileId());
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-
-        try {
-            ResponseEntity<String> responseEntity = restTemplate.postForEntity(paymentUrl + "/deletePaymentProfile",
-                    request, String.class);
-
-            DeleteProfileResp resp = gson.fromJson(responseEntity.getBody(), DeleteProfileResp.class);
-            if (resp.isSuccess()) {
-                investor.setProfileId(null);
-                investor.setExternalAccountId(null);
-                investor.setLastFourAccountNumber(null);
-                investor.setBankName(null);
-                investor.setLinked(Boolean.FALSE);
-                investorRepo.save(investor);
-            }
-            disconnect(sessionId);
-            return Mapper.entityToDto(investor, Collections.emptyList(), Collections.emptyList());
-        } catch (Exception e) {
-            throw new ServiceException("Issue removing bank account");
-        }
+        investor.setExternalAccountId(null);
+        investor.setLastFourAccountNumber(null);
+        investor.setBankName(null);
+        investor.setLinked(Boolean.FALSE);
+        investorRepo.save(investor);
+        return Mapper.entityToDto(investor, Collections.emptyList(), Collections.emptyList());
     }
 
     public TransactionResp createPayment(TransferRequest transferRequest) {
@@ -128,13 +111,15 @@ public class AchService {
         map.add("payment_schedule_currency_code", "USD");
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        String json = restTemplate.postForEntity(paymentUrl + "/savePaymentSchedule", request , String.class)
+                .getBody();
         try {
-            ResponseEntity<String> responseEntity = restTemplate.postForEntity(paymentUrl + "/savePaymentSchedule", request , String.class);
-            PaymentResp resp = gson.fromJson(responseEntity.getBody(), PaymentResp.class);
+            PaymentResp resp = gson.fromJson(json, PaymentResp.class);
             Transaction transaction = transactionService.createTransaction(transferRequest, resp.getData().getPayment_schedule_id());
             disconnect(sessionId);
             return Mapper.entityToDto(transaction);
         } catch (Exception e) {
+            System.out.println(json);
             throw new ServiceException("Issue with bank transfer");
         }
     }
@@ -151,6 +136,7 @@ public class AchService {
             ProfileResp resp = gson.fromJson(json, ProfileResp.class);
             return resp.getData().getPayment_profile_id();
         } catch (Exception e) {
+            System.out.println(json);
             throw new ServiceException("Issue creating customer profile");
         }
     }

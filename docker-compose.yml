@@ -1,6 +1,16 @@
 version: '3'
 
 services:
+  fe:
+    image: reit-fe:latest
+    ports:
+      - 80:3000
+    expose:
+      - 80
+    depends_on:
+      - reit
+    links:
+      - reit
   db:
     image: postgres
     environment:
@@ -14,8 +24,6 @@ services:
 #      - ./.postgres/data:/var/lib/postgresql/data
   reit:
     image: reit:latest
-    expose:
-      - 8080
     ports:
       - 8080:8080
     depends_on:
